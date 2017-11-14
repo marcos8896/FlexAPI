@@ -39,10 +39,26 @@ if(cluster.isMaster){
   const customer = require('./routes/customers');
   const employee = require('./routes/employees');
   const provider = require('./routes/providers');
+  const mongoose = require('mongoose');
   
   const user = require('./routes/users');
   
   
+  const config = require('./config/db-connection-mongo');
+  
+  //Connect to database.
+  mongoose.connect(config.database);
+  
+  //On connection.
+  mongoose.connection.on('connected', () => {
+      console.log(`Connected to database ${config.database}`);
+  })
+  
+  //On error.
+  mongoose.connection.on('error', (err) => {
+      console.log(`Databa error ${err}`);
+  })
+
   
   const app = express();
   

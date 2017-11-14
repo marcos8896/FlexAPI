@@ -74,7 +74,6 @@ Product.update = async (product, cb) => {
 }
 
 Product.remove = async (id, cb) => {
-
   try {
     const result = await pool.query('DELETE FROM product WHERE product_id = $1', [id])
     return cb(null, result.rows);
