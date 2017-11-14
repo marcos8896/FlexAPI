@@ -23,17 +23,20 @@ router
 
     .post('/', (req, res, next) => {
         const product = {
-            product_id: null,
-            description: req.body.description,
-            brand: req.body.brand,
-            flavor: req.body.flavor,
-            expiration_date: req.body.expiration_date,
-            sale_price: req.body.sale_price,
-            buy_price: req.body.buy_price,
-            existence: req.body.existence,
-            max: req.body.max,
-            min: req.body.min
+          product_id: null,
+          description: req.body.description,
+          brand: req.body.brand,
+          flavor: req.body.flavor,
+          expiration_date: require('moment')(req.body.expiration_date).format('YYYY-MM-DD'),
+          sale_price: req.body.sale_price,
+          buy_price: req.body.buy_price,
+          existence: req.body.existence,
+          max: req.body.max,
+          min: req.body.min
         };
+
+        console.log('product: ', product);
+        
         Product.insert(product, (err, data) => {
             return Product.response(res, err, data);
         });
@@ -45,7 +48,7 @@ router
             description: req.body.description,
             brand: req.body.brand,
             flavor: req.body.flavor,
-            expiration_date: req.body.expiration_date,
+            expiration_date: require('moment')(req.body.expiration_date).format('YYYY-MM-DD'),
             sale_price: req.body.sale_price,
             buy_price: req.body.buy_price,
             existence: req.body.existence,

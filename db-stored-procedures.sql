@@ -163,51 +163,6 @@ END
 
 
 
--- <<<5.- Purchase history by a {model} in a period. Model could be Provider, otherwise it will return all the records.>>>
-DELIMITER $$
--- fromDate: The initial date for WHERE statement.
--- toDate: The final date for WHERE statement.
--- column_id: Could be `provider_id. If column_id is not provided,
--- 			  the procedure will return all the records that matches against the dates.
--- id: The id that will be compared on WHERE statement.
-
-DROP PROCEDURE IF EXISTS purchaseHistoryByColumnInAPeriod$$
-CREATE PROCEDURE `purchaseHistoryByColumnInAPeriod`(
-	  IN fromDate DATE, 
-	  IN toDate DATE, 
-	  IN column_id VARCHAR(20), 
-	  IN id INT  
-  )
-  
-  
-BEGIN
-	DECLARE initialQuery VARCHAR(500) DEFAULT 'SELECT pp.purchase_id, pp.purchase_date, pp.subtotal, 
-					   pp.discount, pp.total, p.name AS provider_name, p.description provider_description
-					   FROM purchaseProduct pp
-					   INNER JOIN provider p ON p.provider_id = pp.provider_id
-					   WHERE (pp.purchase_date BETWEEN ? AND ? )';
-
-	SET @from_date = fromDate;
-	SET @to_date = toDate;
-	SET @id = id;
-	
-	IF (column_id = 'provider_id') THEN
-		SET initialQuery = CONCAT(initialQuery, ' AND pp.', column_id, ' = ? ');
-        SET @dynamic_query = initialQuery;
-        PREPARE stmt FROM @dynamic_query;
-		EXECUTE stmt USING @from_date, @to_date, @id;
-		DEALLOCATE PREPARE stmt;
-	
-  ELSE
-		SET @dynamic_query = initialQuery;
-		PREPARE stmt FROM @dynamic_query;
-		EXECUTE stmt USING @from_date, @to_date;
-		DEALLOCATE PREPARE stmt;
-        
-  END IF;
-
-
-END$$
 
 
 -- <<< Get the bill from a customer, can be sales in debt, settled sales or both.>>>
@@ -258,3 +213,41 @@ BEGIN
     select concat('*', msg) AS '* DEBUG:';
   END; END IF;
 END $$
+
+
+--- <<< DOT NOT USE THIS STORED PROCEDURE FOR PRODUCTION >>>
+DELIMITER $$
+USE flex_admin$$
+DROP PROCEDURE IF EXISTS procDropAllTables $$
+ 
+CREATE PROCEDURE procDropAllTables()
+ 
+BEGIN
+    DECLARE table_name VARCHAR(255);
+    DECLARE end_of_tables INT DEFAULT 0;
+
+    DECLARE cur CURSOR FOR
+        SELECT t.table_name 
+        FROM information_schema.tables t 
+        WHERE t.table_schema = DATABASE() AND t.table_type='BASE TABLE';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET end_of_tables = 1;
+
+    SET FOREIGN_KEY_CHECKS = 0;
+    OPEN cur;
+
+    tables_loop: LOOP
+        FETCH cur INTO table_name;
+
+        IF end_of_tables = 1 THEN
+            LEAVE tables_loop;
+        END IF;
+
+        SET @s = CONCAT('DROP TABLE IF EXISTS ' , table_name);
+        PREPARE stmt FROM @s;
+        EXECUTE stmt;
+
+    END LOOP;
+  
+    CLOSE cur;
+    SET FOREIGN_KEY_CHECKS = 1;
+END$$
